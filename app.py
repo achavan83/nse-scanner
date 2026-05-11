@@ -631,96 +631,76 @@ def check_pdh_pdl_break(symbol):
 
 
 def prepare_stock_levels(symbol):
-    token = SYMBOL_TOKEN_MAP.get(symbol)
-    if not token:
-        return
+            return False
 
-    today = datetime.now().date()
-    from_date = today - timedelta(days=7)
+        first_6 = intraday[:orb_candles]
 
-    daily = kite.historical_data(token, from_date, today, "day")
-    data = kite.historical_data(token, from_date, today, INTERVAL)
-    df = pd.DataFrame(data)
-    prev_vpoc, premax_idx, prewidth = get_previous_day_vpoc(df)
-    curr_vpoc, curmax_idx, curwidth = get_current_day_vpoc(df)
-    dfNew = calculate_dpo(df, period=20)
-    dfNew = calculate_macd(df)
-    dfNewRSI = calculate_rsi(df)
-    dfNewsuper1 = supertrend_ok(df, 10, 1)
-    dfNewsuper2 = supertrend_ok(df, 10, 2)
-    dfNewADX = calculate_adx(df)
-    dfvolume = first_30min_volume_check(df)
-    dfslope = slope_strength(df)
-    orbBreakoutWithVol = first_30min_breakout(df, range_minutes=bigBreakout)
-    orbBreakoutWithVol_15 = first_30min_breakout(df, range_minutes=samllBreakout)
-    volume20 = volume_ma_break(df, 20)
-    ema = ema_position_signal(df)
-    macdSignal = macd_crossover_signal(dfNew)
-    dfADX = dfNewADX[['ADX', '+DI', '-DI']].dropna().iloc[-1]
+        if len(first_6) < orb_candles:
+            return False
 
-    last_row = dfNew.iloc[-1]
-    last_row_RSI = dfNewRSI.iloc[-1]
-    dfsuper1 = dfNewsuper1.iloc[-1]
-    dfsuper2 = dfNewsuper2.iloc[-1]
+        orb_high = max(c['high'] for c in first_6)
+        orb_low = min(c['low'] for c in first_6)
 
-    macd_value = last_row['MACD']
-    signal_value = last_row['Signal']
-    if macd_value > signal_value:
-        macdaction = "BUY"
-    elif macd_value < signal_value:
-        macdaction = "SELL"
-    else:
-        macdaction = "HOLD"
+        day_high = max(c['high'] for c in intraday)
+        day_low = min(c['low'] for c in intraday)
 
-    dpo_value = last_row['DPO']
-    rsi_value = last_row_RSI['RSI']
-    dfNewsuper_1 = dfsuper1['ST_Signal']
-    dfNewsuper_2 = dfsuper2['ST_Signal']
+        last_close = float(df.iloc[-1]['close'])
 
-    if len(daily) < 2:
-        return
+        dfday = pd.DataFrame(daily)
+        privousdf = calculate_pivots(dfday)
 
-    previous_day = daily[-2]
-    current_day = daily[-1]
-    pdh = previous_day["high"]
-    pdl = previous_day["low"]
-    cdh = current_day["high"]
-    cdl = current_day["low"]
-    pdVol = previous_day["volume"]
+        yday = privousdf.iloc[-2]
 
-    intraday = kite.historical_data(token, today, today, timeFrame)
-    first_6 = intraday[:orb_candles]
+        cprsignal = cpr_signal(dfday)
 
-    if len(first_6) < orb_candles:
-        return
+        STOCK_LEVELS[symbol] = {
+            "token": token,
+            "pdh": pdh,
+            "pdl": pdl,
+            "cdh": cdh,
+            "cdl": cdl,
+            "orb_high": orb_high,
+            "orb_low": orb_low,
+            "day_high": day_high,
+            "day_low": day_low,
+            "pdVol": pdVol,
+            "last_close": last_close,
+            "prev_vpoc": float(prev_vpoc) if prev_vpoc else 0,
+            "curr_vpoc": float(curr_vpoc),
+            "premax_idx": float(premax_idx) if premax_idx else 0,
+            "curmax_idx": float(curmax_idx),
+            "curwidth": float(curwidth),
+            "prewidth": float(prewidth) if prewidth else 0,
+            "df_DPO": float(dpo_value),
+            "df_MACD": macdaction,
+            "dfADX": float(dfADX['ADX']),
+            "dfPlusDI": float(dfADX['+DI']),
+            "dfMinusDI": float(dfADX['-DI']),
+            "cprsignal": cprsignal,
+            "rsi_value": float(rsi_value),
+            "dfNewsuper_1": dfNewsuper_1,
+            "dfNewsuper_2": dfNewsuper_2,
+            "dfvolume": bool(dfvolume),
+            "dfema": ema,
+            "P": float(yday['P']),
+            "R1": float(yday['R1']),
+            "R2": float(yday['R2']),
+            "R3": float(yday['R3']),
+            "S1": float(yday['S1']),
+            "S2": float(yday['S2']),
+            "S3": float(yday['S3']),
+            "macdSignal": macdSignal,
+            "orbBreakoutWithVol": orbBreakoutWithVol,
+            "orbBreakoutWithVol_15": orbBreakoutWithVol_15,
+            "volume20": volume20,
+            "dfslope": dfslope
+        }
 
-    orb_high = max(c["high"] for c in first_6)
-    orb_low = min(c["low"] for c in first_6)
-    day_high = max(c["high"] for c in intraday)
-    day_low = min(c["low"] for c in intraday)
-    last_close = df.iloc[-1]['close']
-    dfday = pd.DataFrame(daily)
-    privousdf = calculate_pivots(dfday)
-    yday = privousdf.iloc[-2]
-    cprsignal = cpr_signal(dfday)
+        return True
 
-    STOCK_LEVELS[symbol] = {
-        "token": token, "pdh": pdh, "pdl": pdl, "cdh": cdh, "cdl": cdl,
-        "orb_high": orb_high, "orb_low": orb_low, "day_high": day_high, "day_low": day_low,
-        "pdVol": pdVol, "last_close": float(last_close),
-        "prev_vpoc": float(prev_vpoc), "curr_vpoc": float(curr_vpoc),
-        "premax_idx": float(premax_idx), "curmax_idx": float(curmax_idx),
-        "curwidth": float(curwidth), "prewidth": float(prewidth),
-        "df_DPO": dpo_value, "df_MACD": macdaction,
-        "dfADX": dfADX['ADX'], "dfPlusDI": dfADX['+DI'], "dfMinusDI": dfADX['-DI'],
-        "cprsignal": cprsignal, "rsi_value": rsi_value,
-        "dfNewsuper_1": dfNewsuper_1, "dfNewsuper_2": dfNewsuper_2,
-        "dfvolume": dfvolume, "dfema": ema,
-        "P": float(yday['P']), "R1": float(yday['R1']), "R2": float(yday['R2']),
-        "R3": float(yday['R3']), "S1": float(yday['S1']), "S2": float(yday['S2']), "S3": float(yday['S3']),
-        "macdSignal": macdSignal, "orbBreakoutWithVol": orbBreakoutWithVol,
-        "orbBreakoutWithVol_15": orbBreakoutWithVol_15, "volume20": volume20, "dfslope": dfslope
-    }
+    except Exception as e:
+        print(f"prepare_stock_levels ERROR {symbol}: {e}")
+        return False
 
 
 def check_breakout(last_close, curr_vpoc, vwap, cpr, adx, adxdiplus, adxminus, dpo, macd,
@@ -769,7 +749,20 @@ def slope_strength(df):
     df = df[df['date'].dt.date == today]
 
     if len(df) < 5:
-        return None
+        return {
+            "ema_up": False,
+            "ema_down": False,
+            "ema9_up": False,
+            "ema9_down": False,
+            "vwap_up": False,
+            "vwap_down": False,
+            "ema_strength": 0,
+            "ema9_strength": 0,
+            "vwap_strength": 0,
+            "ema_distance_pct": 0,
+            "vwap_distance_pct": 0,
+            "ema_gap": 0
+        }
 
     df['EMA20'] = df['close'].ewm(span=20, adjust=False).mean()
     df['EMA9'] = df['close'].ewm(span=9, adjust=False).mean()
@@ -872,7 +865,7 @@ def first_30min_breakout(df, range_minutes=30):
     if len(post_df) < 4:
         return {"buy": False, "sell": False, "time": None}
 
-    for i in range(len(post_df)):
+    for i in range(1, len(post_df)):
         candle = post_df.iloc[i]
         prev_candle = post_df.iloc[i - 1]
         body = abs(candle['close'] - candle['open'])
@@ -900,13 +893,36 @@ ALLOWED_STOCKS = set()
 
 def load_allowed_stocks():
     global ALLOWED_STOCKS
-    with open("nse_derivative_stocks_FullList.csv", newline='') as csvfile:
-        reader = csv.DictReader(csvfile)
-        first_column = reader.fieldnames[0]
-        for row in reader:
-            value = row[first_column].strip().upper()
-            if value:
-                ALLOWED_STOCKS.add(value)
+
+    csv_path = os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "nse_derivative_stocks_FullList.csv"
+    )
+
+    if not os.path.exists(csv_path):
+        print(f"CSV FILE NOT FOUND: {csv_path}")
+        return
+
+    try:
+        with open(csv_path, newline='', encoding='utf-8') as csvfile:
+            reader = csv.DictReader(csvfile)
+
+            if not reader.fieldnames:
+                print("CSV has no headers")
+                return
+
+            first_column = reader.fieldnames[0]
+
+            for row in reader:
+                value = str(row[first_column]).strip().upper()
+
+                if value:
+                    ALLOWED_STOCKS.add(value)
+
+        print(f"Loaded {len(ALLOWED_STOCKS)} stocks")
+
+    except Exception as e:
+        print("CSV Load Error:", e)
 
 
 load_allowed_stocks()
@@ -952,7 +968,17 @@ def get_stocks():
         initialize_session()
         url = f"https://www.nseindia.com/api/heatmap-symbols?type={index_type}&indices={index}"
         response = session.get(url, headers=BASE_HEADERS, timeout=10)
-        stocks = response.json()
+        if response.status_code != 200:
+            return jsonify({
+                "error": f"NSE API failed with status {response.status_code}"
+            }), 500
+        
+        try:
+            stocks = response.json()
+        except Exception:
+            return jsonify({
+                "error": "NSE returned invalid JSON"
+            }), 500
 
         symbols = []
         for stock in stocks:
@@ -960,15 +986,26 @@ def get_stocks():
             if symbol in ALLOWED_STOCKS:
                 symbols.append(symbol)
 
+        valid_symbols = []
+
         for s in symbols:
-            if s not in STOCK_LEVELS:
-                prepare_stock_levels(s)
+            try:
+                if s not in STOCK_LEVELS:
+                    success = prepare_stock_levels(s)
+        
+                    if success:
+                        valid_symbols.append(s)
+                else:
+                    valid_symbols.append(s)
+        
+            except Exception as e:
+                print(f"Error preparing {s}: {e}")
 
         filtered_stocks = []
 
         for stock in stocks:
             symbol = stock["symbol"].strip().upper()
-            if symbol in symbols:
+            if symbol in valid_symbols and symbol in STOCK_LEVELS:
                 signal = get_signal(symbol, stock['lastPrice'])
                 if signal:
                     scan_result = scan_market_and_update(symbol, STOCK_LEVELS[symbol]["token"])
@@ -1066,7 +1103,13 @@ def get_stocks():
     except Exception as e:
         return jsonify({"error": str(e)})
 
-
+@app.errorhandler(Exception)
+def handle_exception(e):
+    print("GLOBAL ERROR:", str(e))
+    return jsonify({
+        "error": str(e)
+    }), 500
+    
 if __name__ == '__main__':
     port = int(os.environ.get("PORT", 5000))
     app.run(host='0.0.0.0', port=port, debug=False)
