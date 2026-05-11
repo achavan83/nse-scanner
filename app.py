@@ -16,7 +16,7 @@ STOCK_LEVELS = {}      # Stores PDH, PDL, ORB
 OBR_LEVELS = {}
 LTP_CACHE = {}         # Stores latest LTP
 LAST_LTP_UPDATE = 0
-LTP_REFRESH_INTERVAL = 120   # seconds
+LTP_REFRESH_INTERVAL = 180   # seconds
 
 orb_candles = 6
 samllBreakout = 15
