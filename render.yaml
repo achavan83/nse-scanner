@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: nse-scanner
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:app --bind 0.0.0.0:$PORT --workers 1 --timeout 120
+    envVars:
+      - key: KITE_API_KEY
+        value: h81rgom2pxekmyx0
+      - key: KITE_ACCESS_TOKEN
+        value: YOUR_DAILY_ACCESS_TOKEN_HERE
+    plan: free
