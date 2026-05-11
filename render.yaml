@@ -9,4 +9,6 @@ services:
         value: h81rgom2pxekmyx0
       - key: KITE_ACCESS_TOKEN
         value: YOUR_DAILY_ACCESS_TOKEN_HERE
+      - key: PYTHON_VERSION
+        value: 3.11.9
     plan: free
