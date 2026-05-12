@@ -440,7 +440,7 @@ def scan_market_and_update(symbol, token):
     if not token:
         return None
     today = datetime.now().date()
-    from_date = today - timedelta(days=7)
+    from_date = today - timedelta(days=2)
     try:
         data = kite.historical_data(token, from_date, today, "5minute")
         daily = kite.historical_data(token, from_date, today, "day")
