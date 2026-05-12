@@ -636,7 +636,7 @@ def prepare_stock_levels(symbol):
         return
 
     today = datetime.now().date()
-    from_date = today - timedelta(days=7)
+    from_date = today - timedelta(days=2)
 
     daily = kite.historical_data(token, from_date, today, "day")
     data = kite.historical_data(token, from_date, today, INTERVAL)
