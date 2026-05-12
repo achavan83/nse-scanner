@@ -11,12 +11,12 @@ import os
 
 # Cache storage
 STOCK_CACHE = {}
-CACHE_TTL = 120   # seconds (1 minute)
+CACHE_TTL = 180   # seconds (1 minute)
 STOCK_LEVELS = {}      # Stores PDH, PDL, ORB
 OBR_LEVELS = {}
 LTP_CACHE = {}         # Stores latest LTP
 LAST_LTP_UPDATE = 0
-LTP_REFRESH_INTERVAL = 120   # seconds
+LTP_REFRESH_INTERVAL = 180   # seconds
 
 orb_candles = 6
 samllBreakout = 15
