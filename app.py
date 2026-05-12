@@ -11,7 +11,7 @@ import os
 
 # Cache storage
 STOCK_CACHE = {}
-CACHE_TTL = 60   # seconds (1 minute)
+CACHE_TTL = 120   # seconds (1 minute)
 STOCK_LEVELS = {}      # Stores PDH, PDL, ORB
 OBR_LEVELS = {}
 LTP_CACHE = {}         # Stores latest LTP
