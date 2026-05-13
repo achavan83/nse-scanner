@@ -32,7 +32,7 @@ RESOLUTION = 500
 # -------------------------------
 
 API_KEY = os.environ.get("KITE_API_KEY", "h81rgom2pxekmyx0")
-ACCESS_TOKEN = os.environ.get("KITE_ACCESS_TOKEN", "QFvoEebYB23Tz6obBnAUbKBGAj6eynrk")
+ACCESS_TOKEN = os.environ.get("KITE_ACCESS_TOKEN", "GU0NqWxI487pWSD9Q6PK60lSM1iSPFnO")
 
 kite = KiteConnect(api_key=API_KEY)
 kite.set_access_token(ACCESS_TOKEN)
